@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtualenv / uv
+.venv/
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Environment & secrets
+.env
+
+# Warehouse files
+data/*
+!data/.gitkeep
+*.duckdb
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
