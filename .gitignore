@@ -21,6 +21,11 @@ data/*
 !data/.gitkeep
 *.duckdb
 
+# dbt
+target/
+dbt_packages/
+logs/
+
 # OS / IDE
 .DS_Store
 .idea/

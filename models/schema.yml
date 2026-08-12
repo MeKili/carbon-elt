@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw data loaded from the Carbon Intensity API
+    tables:
+      - name: raw_national_intensity
+        description: Raw national carbon-intensity readings
+        columns:
+          - name: valid_from
+            description: Start time of the half-hour window
+            tests:
+              - not_null
+          - name: valid_to
+            description: End time of the half-hour window
+            tests:
+              - not_null
+          - name: forecast
+            description: Forecasted carbon intensity (g CO2/kWh)
+          - name: actual
+            description: Actual carbon intensity (g CO2/kWh)
+          - name: index
+            description: Carbon intensity index level
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: [low, moderate, high, very_high, unknown]
+
+models:
+  - name: stg_national_intensity
+    description: Staging model for national carbon-intensity readings
+    columns:
+      - name: valid_from
+        description: Start time of the half-hour window
+        tests:
+          - not_null
+      - name: valid_to
+        description: End time of the half-hour window
+        tests:
+          - not_null
+      - name: forecast
+        description: Forecasted carbon intensity (g CO2/kWh)
+      - name: actual
+        description: Actual carbon intensity (g CO2/kWh)
+      - name: index
+        description: Carbon intensity index level
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [low, moderate, high, very_high, unknown]

@@ -8,6 +8,7 @@ dependencies = [
     "pydantic-settings>=2.3",
     "httpx>=0.27",
     "duckdb>=1.0",
+    "dbt-duckdb>=1.11.0",
 ]
 
 # Added as the platform grows:
