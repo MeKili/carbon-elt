@@ -50,3 +50,22 @@ models:
           - accepted_values:
               arguments:
                 values: [low, moderate, high, very_high, unknown]
+
+  - name: mart_daily_intensity
+    description: Daily aggregated carbon-intensity metrics
+    columns:
+      - name: intensity_date
+        description: Calendar date of the readings
+        tests:
+          - not_null
+          - unique
+      - name: avg_actual_intensity
+        description: Average actual carbon intensity for the day (g CO2/kWh)
+        tests:
+          - not_null
+      - name: avg_forecast_intensity
+        description: Average forecasted carbon intensity for the day (g CO2/kWh)
+      - name: reading_count
+        description: Number of half-hourly readings included in the average
+        tests:
+          - not_null
