@@ -15,3 +15,12 @@ class IntensityReading(BaseModel):
     forecast: int | None
     actual: int | None
     index: str
+
+
+class GenerationReading(BaseModel):
+    """Generation mix data for a single half-hour window."""
+
+    valid_from: datetime
+    valid_to: datetime
+    fuel_type: str
+    percentage: float

@@ -26,6 +26,25 @@ sources:
               - accepted_values:
                   arguments:
                     values: [low, moderate, high, very_high, unknown]
+      - name: raw_generation
+        description: Raw generation mix by fuel type
+        columns:
+          - name: valid_from
+            description: Start time of the half-hour window
+            tests:
+              - not_null
+          - name: valid_to
+            description: End time of the half-hour window
+            tests:
+              - not_null
+          - name: fuel_type
+            description: Type of fuel (coal, gas, wind, nuclear, etc.)
+            tests:
+              - not_null
+          - name: percentage
+            description: Percentage of generation from this fuel type
+            tests:
+              - not_null
 
 models:
   - name: stg_national_intensity
@@ -50,6 +69,26 @@ models:
           - accepted_values:
               arguments:
                 values: [low, moderate, high, very_high, unknown]
+
+  - name: stg_generation
+    description: Staging model for generation mix by fuel type
+    columns:
+      - name: valid_from
+        description: Start time of the half-hour window
+        tests:
+          - not_null
+      - name: valid_to
+        description: End time of the half-hour window
+        tests:
+          - not_null
+      - name: fuel_type
+        description: Type of fuel (coal, gas, wind, nuclear, etc.)
+        tests:
+          - not_null
+      - name: percentage
+        description: Percentage of generation from this fuel type
+        tests:
+          - not_null
 
   - name: mart_daily_intensity
     description: Daily aggregated carbon-intensity metrics
