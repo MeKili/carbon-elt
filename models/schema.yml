@@ -108,3 +108,22 @@ models:
         description: Number of half-hourly readings included in the average
         tests:
           - not_null
+
+  - name: mart_daily_index_share
+    description: Daily percentage of time spent at each carbon-intensity index level
+    columns:
+      - name: intensity_date
+        description: Calendar date of the readings
+        tests:
+          - not_null
+      - name: index
+        description: Carbon intensity index level
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [low, moderate, high, very_high]
+      - name: share_percent
+        description: Percentage of half-hourly readings at this index level
+        tests:
+          - not_null
