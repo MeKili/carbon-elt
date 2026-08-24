@@ -33,3 +33,6 @@ jobs:
 
       - name: Tests (pytest)
         run: uv run pytest
+
+      - name: Models validate (dbt)
+        run: uv run dbt parse --profiles-dir .
