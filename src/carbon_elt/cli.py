@@ -14,8 +14,12 @@ from carbon_elt.warehouse import get_connection, init_schema, load_generation
 
 def cmd_load(args: argparse.Namespace) -> int:
     """Load fresh data from the UK Carbon Intensity API into DuckDB."""
-    count = run()
-    print(f"Loaded {count} intensity readings into DuckDB.")
+    counts = run()
+    total = sum(counts.values())
+    print(
+        f"Loaded {counts['intensity']} intensity and {counts['generation']} "
+        f"generation readings ({total} total) into DuckDB."
+    )
     return 0
 
 

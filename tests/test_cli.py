@@ -12,7 +12,7 @@ from carbon_elt.cli import cmd_info, cmd_load, cmd_load_generation, main
 def test_cmd_load_calls_pipeline() -> None:
     """Test that load command calls the pipeline."""
     with patch("carbon_elt.cli.run") as mock_run:
-        mock_run.return_value = 42
+        mock_run.return_value = {"intensity": 42, "generation": 28}
         result = cmd_load(MagicMock())
         assert result == 0
         mock_run.assert_called_once()
