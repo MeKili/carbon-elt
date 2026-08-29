@@ -46,6 +46,7 @@ sources:
             description: Percentage of generation from this fuel type
             tests:
               - not_null
+              - percentage_range
 
 models:
   - name: stg_national_intensity
@@ -90,6 +91,7 @@ models:
         description: Percentage of generation from this fuel type
         tests:
           - not_null
+          - percentage_range
 
   - name: mart_daily_intensity
     description: Daily aggregated carbon-intensity metrics
