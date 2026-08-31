@@ -130,6 +130,7 @@ models:
         description: Percentage of half-hourly readings at this index level
         tests:
           - not_null
+          - percentage_range
     tests:
       - percentages_sum_to_100:
           arguments:
