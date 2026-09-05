@@ -136,3 +136,20 @@ models:
           arguments:
             column_name: share_percent
             group_by_cols: intensity_date
+
+  - name: mart_daily_generation_mix
+    description: Daily average generation mix by fuel type
+    columns:
+      - name: generation_date
+        description: Calendar date of the readings
+        tests:
+          - not_null
+      - name: fuel_type
+        description: Type of fuel (coal, gas, wind, nuclear, etc.)
+        tests:
+          - not_null
+      - name: avg_percentage
+        description: Average percentage of generation from this fuel type for the day
+        tests:
+          - not_null
+          - percentage_range
