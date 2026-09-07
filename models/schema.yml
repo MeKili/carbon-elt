@@ -16,6 +16,11 @@ sources:
             description: End time of the half-hour window
             tests:
               - not_null
+        tests:
+          - timestamp_validity:
+              arguments:
+                start_column: valid_from
+                end_column: valid_to
           - name: forecast
             description: Forecasted carbon intensity (g CO2/kWh)
           - name: actual
@@ -47,6 +52,11 @@ sources:
             tests:
               - not_null
               - percentage_range
+        tests:
+          - timestamp_validity:
+              arguments:
+                start_column: valid_from
+                end_column: valid_to
 
 models:
   - name: stg_national_intensity
@@ -60,6 +70,11 @@ models:
         description: End time of the half-hour window
         tests:
           - not_null
+    tests:
+      - timestamp_validity:
+          arguments:
+            start_column: valid_from
+            end_column: valid_to
       - name: forecast
         description: Forecasted carbon intensity (g CO2/kWh)
       - name: actual
@@ -92,6 +107,11 @@ models:
         tests:
           - not_null
           - percentage_range
+    tests:
+      - timestamp_validity:
+          arguments:
+            start_column: valid_from
+            end_column: valid_to
 
   - name: mart_daily_intensity
     description: Daily aggregated carbon-intensity metrics
