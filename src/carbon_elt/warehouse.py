@@ -41,8 +41,16 @@ def init_schema(conn: duckdb.DuckDBPyConnection) -> None:
 
 
 def load_readings(conn: duckdb.DuckDBPyConnection, readings: list[IntensityReading]) -> int:
-    """Insert readings into the raw table and return the number of rows inserted."""
+    """Load intensity readings, replacing any existing records with the same time window."""
+    if not readings:
+        return 0
     rows = [(r.valid_from, r.valid_to, r.forecast, r.actual, r.index) for r in readings]
+    time_windows = [(r[0], r[1]) for r in rows]
+    for valid_from, valid_to in time_windows:
+        conn.execute(
+            f"DELETE FROM {RAW_TABLE} WHERE valid_from = ? AND valid_to = ?",
+            [valid_from, valid_to],
+        )
     conn.executemany(
         f"INSERT INTO {RAW_TABLE} (valid_from, valid_to, forecast, actual, index) "
         "VALUES (?, ?, ?, ?, ?)",
@@ -52,8 +60,16 @@ def load_readings(conn: duckdb.DuckDBPyConnection, readings: list[IntensityReadi
 
 
 def load_generation(conn: duckdb.DuckDBPyConnection, readings: list[GenerationReading]) -> int:
-    """Insert generation readings into the raw table and return the number of rows inserted."""
+    """Load generation readings, replacing any existing records with the same time window."""
+    if not readings:
+        return 0
     rows = [(r.valid_from, r.valid_to, r.fuel_type, r.percentage) for r in readings]
+    time_windows = set((r[0], r[1]) for r in rows)
+    for valid_from, valid_to in time_windows:
+        conn.execute(
+            f"DELETE FROM {RAW_GENERATION_TABLE} WHERE valid_from = ? AND valid_to = ?",
+            [valid_from, valid_to],
+        )
     conn.executemany(
         f"INSERT INTO {RAW_GENERATION_TABLE} (valid_from, valid_to, fuel_type, percentage) "
         "VALUES (?, ?, ?, ?)",

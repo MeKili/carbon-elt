@@ -117,3 +117,64 @@ def test_load_generation_inserts_rows() -> None:
     assert result[0] == "wind"
     assert result[1] == 45.5
     conn.close()
+
+
+def test_load_readings_is_idempotent() -> None:
+    conn = get_connection(":memory:")
+    init_schema(conn)
+    readings = [
+        IntensityReading(
+            valid_from=datetime(2026, 1, 20, 12, 0),
+            valid_to=datetime(2026, 1, 20, 12, 30),
+            forecast=200,
+            actual=187,
+            index="moderate",
+        )
+    ]
+    inserted1 = load_readings(conn, readings)
+    assert inserted1 == 1
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 1
+
+    inserted2 = load_readings(conn, readings)
+    assert inserted2 == 1
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 1
+    conn.close()
+
+
+def test_load_generation_is_idempotent() -> None:
+    conn = get_connection(":memory:")
+    init_schema(conn)
+    readings = [
+        GenerationReading(
+            valid_from=datetime(2026, 1, 20, 12, 0),
+            valid_to=datetime(2026, 1, 20, 12, 30),
+            fuel_type="wind",
+            percentage=45.5,
+        ),
+        GenerationReading(
+            valid_from=datetime(2026, 1, 20, 12, 0),
+            valid_to=datetime(2026, 1, 20, 12, 30),
+            fuel_type="gas",
+            percentage=30.2,
+        ),
+    ]
+    inserted1 = load_generation(conn, readings)
+    assert inserted1 == 2
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_GENERATION_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 2
+
+    inserted2 = load_generation(conn, readings)
+    assert inserted2 == 2
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_GENERATION_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 2
+    conn.close()
