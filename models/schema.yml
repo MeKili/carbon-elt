@@ -16,11 +16,6 @@ sources:
             description: End time of the half-hour window
             tests:
               - not_null
-        tests:
-          - timestamp_validity:
-              arguments:
-                start_column: valid_from
-                end_column: valid_to
           - name: forecast
             description: Forecasted carbon intensity (g CO2/kWh)
           - name: actual
@@ -30,8 +25,11 @@ sources:
             tests:
               - not_null
               - accepted_values:
-                  arguments:
-                    values: [low, moderate, high, very_high, unknown]
+                  values: [low, moderate, high, very_high, unknown]
+        tests:
+          - timestamp_validity:
+              start_column: valid_from
+              end_column: valid_to
       - name: raw_generation
         description: Raw generation mix by fuel type
         columns:
@@ -54,9 +52,8 @@ sources:
               - percentage_range
         tests:
           - timestamp_validity:
-              arguments:
-                start_column: valid_from
-                end_column: valid_to
+              start_column: valid_from
+              end_column: valid_to
 
 models:
   - name: stg_national_intensity
@@ -70,11 +67,6 @@ models:
         description: End time of the half-hour window
         tests:
           - not_null
-    tests:
-      - timestamp_validity:
-          arguments:
-            start_column: valid_from
-            end_column: valid_to
       - name: forecast
         description: Forecasted carbon intensity (g CO2/kWh)
       - name: actual
@@ -84,8 +76,11 @@ models:
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: [low, moderate, high, very_high, unknown]
+              values: [low, moderate, high, very_high, unknown]
+    tests:
+      - timestamp_validity:
+          start_column: valid_from
+          end_column: valid_to
 
   - name: stg_generation
     description: Staging model for generation mix by fuel type
@@ -109,9 +104,8 @@ models:
           - percentage_range
     tests:
       - timestamp_validity:
-          arguments:
-            start_column: valid_from
-            end_column: valid_to
+          start_column: valid_from
+          end_column: valid_to
 
   - name: mart_daily_intensity
     description: Daily aggregated carbon-intensity metrics
@@ -144,8 +138,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: [low, moderate, high, very_high]
+              values: [low, moderate, high, very_high]
       - name: share_percent
         description: Percentage of half-hourly readings at this index level
         tests:
@@ -153,9 +146,8 @@ models:
           - percentage_range
     tests:
       - percentages_sum_to_100:
-          arguments:
-            column_name: share_percent
-            group_by_cols: intensity_date
+          column_name: share_percent
+          group_by_cols: intensity_date
 
   - name: mart_daily_generation_mix
     description: Daily average generation mix by fuel type
