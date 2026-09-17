@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 
 from carbon_elt.config import Settings, get_settings
-from carbon_elt.models import GenerationReading, IntensityReading
+from carbon_elt.models import GenerationReading, IntensityReading, RegionalIntensityReading
 
 
 def parse_intensity(payload: dict[str, Any]) -> list[IntensityReading]:
@@ -61,3 +61,30 @@ def fetch_generation(settings: Settings | None = None) -> list[GenerationReading
     response = httpx.get(url, timeout=settings.request_timeout_seconds)
     response.raise_for_status()
     return parse_generation(response.json())
+
+
+def parse_regional_intensity(payload: dict[str, Any]) -> list[RegionalIntensityReading]:
+    """Parse the ``/regional`` JSON payload into typed readings."""
+    readings: list[RegionalIntensityReading] = []
+    for row in payload.get("data", []):
+        intensity = row.get("intensity", {})
+        readings.append(
+            RegionalIntensityReading(
+                valid_from=row["from"],
+                valid_to=row["to"],
+                region_code=row["regionid"],
+                forecast=intensity.get("forecast"),
+                actual=intensity.get("actual"),
+                index=intensity.get("index", "unknown"),
+            )
+        )
+    return readings
+
+
+def fetch_regional_intensity(settings: Settings | None = None) -> list[RegionalIntensityReading]:
+    """Fetch regional carbon-intensity readings from the API."""
+    settings = settings or get_settings()
+    url = f"{settings.carbon_api_base_url}/regional"
+    response = httpx.get(url, timeout=settings.request_timeout_seconds)
+    response.raise_for_status()
+    return parse_regional_intensity(response.json())

@@ -1,6 +1,6 @@
 """Tests for parsing carbon-intensity API payloads (no network access)."""
 
-from carbon_elt.extract import parse_generation, parse_intensity
+from carbon_elt.extract import parse_generation, parse_intensity, parse_regional_intensity
 
 SAMPLE_PAYLOAD = {
     "data": [
@@ -56,3 +56,35 @@ def test_parse_generation_reads_fuel_types() -> None:
 
 def test_parse_generation_handles_empty_data() -> None:
     assert parse_generation({"data": []}) == []
+
+
+SAMPLE_REGIONAL_PAYLOAD = {
+    "data": [
+        {
+            "from": "2026-01-20T12:00Z",
+            "to": "2026-01-20T12:30Z",
+            "regionid": "SE",
+            "intensity": {"forecast": 210, "actual": 195, "index": "moderate"},
+        },
+        {
+            "from": "2026-01-20T12:00Z",
+            "to": "2026-01-20T12:30Z",
+            "regionid": "N",
+            "intensity": {"forecast": 190, "actual": 175, "index": "low"},
+        },
+    ]
+}
+
+
+def test_parse_regional_intensity_reads_multiple_regions() -> None:
+    readings = parse_regional_intensity(SAMPLE_REGIONAL_PAYLOAD)
+    assert len(readings) == 2
+    regions = {r.region_code: r for r in readings}
+    assert regions["SE"].actual == 195
+    assert regions["SE"].index == "moderate"
+    assert regions["N"].actual == 175
+    assert regions["N"].index == "low"
+
+
+def test_parse_regional_intensity_handles_empty_data() -> None:
+    assert parse_regional_intensity({"data": []}) == []

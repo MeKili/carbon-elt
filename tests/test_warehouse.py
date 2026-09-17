@@ -2,14 +2,16 @@
 
 from datetime import datetime
 
-from carbon_elt.models import GenerationReading, IntensityReading
+from carbon_elt.models import GenerationReading, IntensityReading, RegionalIntensityReading
 from carbon_elt.warehouse import (
     RAW_GENERATION_TABLE,
+    RAW_REGIONAL_TABLE,
     RAW_TABLE,
     get_connection,
     init_schema,
     load_generation,
     load_readings,
+    load_regional_intensity,
 )
 
 
@@ -177,4 +179,63 @@ def test_load_generation_is_idempotent() -> None:
     result = conn.execute(f"SELECT COUNT(*) FROM {RAW_GENERATION_TABLE}").fetchone()
     assert result is not None
     assert result[0] == 2
+    conn.close()
+
+
+def test_load_regional_intensity_inserts_rows() -> None:
+    conn = get_connection(":memory:")
+    init_schema(conn)
+    readings = [
+        RegionalIntensityReading(
+            valid_from=datetime(2026, 1, 20, 12, 0),
+            valid_to=datetime(2026, 1, 20, 12, 30),
+            region_code="SE",
+            forecast=210,
+            actual=195,
+            index="moderate",
+        ),
+        RegionalIntensityReading(
+            valid_from=datetime(2026, 1, 20, 12, 0),
+            valid_to=datetime(2026, 1, 20, 12, 30),
+            region_code="N",
+            forecast=190,
+            actual=175,
+            index="low",
+        ),
+    ]
+    inserted = load_regional_intensity(conn, readings)
+    assert inserted == 2
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_REGIONAL_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 2
+    conn.close()
+
+
+def test_load_regional_intensity_is_idempotent() -> None:
+    conn = get_connection(":memory:")
+    init_schema(conn)
+    readings = [
+        RegionalIntensityReading(
+            valid_from=datetime(2026, 1, 20, 12, 0),
+            valid_to=datetime(2026, 1, 20, 12, 30),
+            region_code="SE",
+            forecast=210,
+            actual=195,
+            index="moderate",
+        )
+    ]
+    inserted1 = load_regional_intensity(conn, readings)
+    assert inserted1 == 1
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_REGIONAL_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 1
+
+    inserted2 = load_regional_intensity(conn, readings)
+    assert inserted2 == 1
+
+    result = conn.execute(f"SELECT COUNT(*) FROM {RAW_REGIONAL_TABLE}").fetchone()
+    assert result is not None
+    assert result[0] == 1
     conn.close()

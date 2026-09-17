@@ -24,3 +24,14 @@ class GenerationReading(BaseModel):
     valid_to: datetime
     fuel_type: str
     percentage: float
+
+
+class RegionalIntensityReading(BaseModel):
+    """Regional carbon-intensity reading for a single half-hour window."""
+
+    valid_from: datetime
+    valid_to: datetime
+    region_code: str
+    forecast: int | None
+    actual: int | None
+    index: str

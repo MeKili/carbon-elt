@@ -54,6 +54,35 @@ sources:
           - timestamp_validity:
               start_column: valid_from
               end_column: valid_to
+      - name: raw_regional_intensity
+        description: Raw regional carbon-intensity readings
+        columns:
+          - name: valid_from
+            description: Start time of the half-hour window
+            tests:
+              - not_null
+          - name: valid_to
+            description: End time of the half-hour window
+            tests:
+              - not_null
+          - name: region_code
+            description: Region code (e.g., SE, N, E)
+            tests:
+              - not_null
+          - name: forecast
+            description: Forecasted carbon intensity (g CO2/kWh)
+          - name: actual
+            description: Actual carbon intensity (g CO2/kWh)
+          - name: index
+            description: Carbon intensity index level
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [low, moderate, high, very_high, unknown]
+        tests:
+          - timestamp_validity:
+              start_column: valid_from
+              end_column: valid_to
 
 models:
   - name: stg_national_intensity
@@ -102,6 +131,36 @@ models:
         tests:
           - not_null
           - percentage_range
+    tests:
+      - timestamp_validity:
+          start_column: valid_from
+          end_column: valid_to
+
+  - name: stg_regional_intensity
+    description: Staging model for regional carbon-intensity readings
+    columns:
+      - name: valid_from
+        description: Start time of the half-hour window
+        tests:
+          - not_null
+      - name: valid_to
+        description: End time of the half-hour window
+        tests:
+          - not_null
+      - name: region_code
+        description: Region code (e.g., SE, N, E)
+        tests:
+          - not_null
+      - name: forecast
+        description: Forecasted carbon intensity (g CO2/kWh)
+      - name: actual
+        description: Actual carbon intensity (g CO2/kWh)
+      - name: index
+        description: Carbon intensity index level
+        tests:
+          - not_null
+          - accepted_values:
+              values: [low, moderate, high, very_high, unknown]
     tests:
       - timestamp_validity:
           start_column: valid_from
