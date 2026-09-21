@@ -224,3 +224,25 @@ models:
         tests:
           - not_null
           - percentage_range
+
+  - name: mart_regional_daily_intensity
+    description: Daily aggregated regional carbon-intensity metrics
+    columns:
+      - name: intensity_date
+        description: Calendar date of the readings
+        tests:
+          - not_null
+      - name: region_code
+        description: Region code (e.g., SE, N, E)
+        tests:
+          - not_null
+      - name: avg_actual_intensity
+        description: Average actual carbon intensity for the region and day (g CO2/kWh)
+        tests:
+          - not_null
+      - name: avg_forecast_intensity
+        description: Average forecasted carbon intensity for the region and day (g CO2/kWh)
+      - name: reading_count
+        description: Number of half-hourly readings included in the average
+        tests:
+          - not_null
