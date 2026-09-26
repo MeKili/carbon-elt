@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,9 +17,18 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    carbon_api_base_url: str = "https://api.carbonintensity.org.uk"
-    duckdb_path: str = "data/carbon.duckdb"
-    request_timeout_seconds: float = 10.0
+    carbon_api_base_url: str = Field(
+        "https://api.carbonintensity.org.uk",
+        description="Base URL for the UK Carbon Intensity API",
+    )
+    duckdb_path: str = Field(
+        "data/carbon.duckdb",
+        description="Local filesystem path to the DuckDB database file",
+    )
+    request_timeout_seconds: float = Field(
+        10.0,
+        description="HTTP request timeout in seconds",
+    )
 
 
 @lru_cache
