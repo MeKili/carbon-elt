@@ -6,13 +6,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from carbon_elt.cli import cmd_info, cmd_load, cmd_load_generation, main
+from carbon_elt.cli import cmd_info, cmd_load, cmd_load_generation, cmd_load_regional, main
 
 
 def test_cmd_load_calls_pipeline() -> None:
     """Test that load command calls the pipeline."""
     with patch("carbon_elt.cli.run") as mock_run:
-        mock_run.return_value = {"intensity": 42, "generation": 28}
+        mock_run.return_value = {"intensity": 42, "generation": 28, "regional": 15}
         result = cmd_load(MagicMock())
         assert result == 0
         mock_run.assert_called_once()
@@ -35,6 +35,23 @@ def test_cmd_load_generation_loads_data() -> None:
         mock_fetch.assert_called_once()
 
 
+def test_cmd_load_regional_loads_data() -> None:
+    """Test that load_regional command fetches and loads regional data."""
+    with (
+        patch("carbon_elt.cli.fetch_regional_intensity") as mock_fetch,
+        patch("carbon_elt.cli.get_connection") as mock_conn,
+        patch("carbon_elt.cli.get_settings") as mock_settings,
+    ):
+        mock_settings.return_value.duckdb_path = ":memory:"
+        mock_fetch.return_value = []
+        mock_connection = MagicMock()
+        mock_conn.return_value = mock_connection
+
+        result = cmd_load_regional(MagicMock())
+        assert result == 0
+        mock_fetch.assert_called_once()
+
+
 def test_cmd_info_shows_config() -> None:
     """Test that info command shows configuration."""
     with patch("carbon_elt.cli.get_settings") as mock_settings:
@@ -51,6 +68,14 @@ def test_main_with_load_command() -> None:
     with patch("carbon_elt.cli.cmd_load") as mock_cmd:
         mock_cmd.return_value = 0
         result = main(["load"])
+        assert result == 0
+
+
+def test_main_with_load_regional_command() -> None:
+    """Test main function with load-regional command."""
+    with patch("carbon_elt.cli.cmd_load_regional") as mock_cmd:
+        mock_cmd.return_value = 0
+        result = main(["load-regional"])
         assert result == 0
 
 

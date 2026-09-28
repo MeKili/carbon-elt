@@ -7,9 +7,14 @@ import sys
 from collections.abc import Callable
 
 from carbon_elt.config import get_settings
-from carbon_elt.extract import fetch_generation
+from carbon_elt.extract import fetch_generation, fetch_regional_intensity
 from carbon_elt.pipeline import run
-from carbon_elt.warehouse import get_connection, init_schema, load_generation
+from carbon_elt.warehouse import (
+    get_connection,
+    init_schema,
+    load_generation,
+    load_regional_intensity,
+)
 
 
 def cmd_load(args: argparse.Namespace) -> int:
@@ -17,8 +22,8 @@ def cmd_load(args: argparse.Namespace) -> int:
     counts = run()
     total = sum(counts.values())
     print(
-        f"Loaded {counts['intensity']} intensity and {counts['generation']} "
-        f"generation readings ({total} total) into DuckDB."
+        f"Loaded {counts['intensity']} intensity, {counts['generation']} generation, "
+        f"and {counts['regional']} regional readings ({total} total) into DuckDB."
     )
     return 0
 
@@ -32,6 +37,20 @@ def cmd_load_generation(args: argparse.Namespace) -> int:
         init_schema(conn)
         count = load_generation(conn, readings)
         print(f"Loaded {count} generation readings into DuckDB.")
+        return 0
+    finally:
+        conn.close()
+
+
+def cmd_load_regional(args: argparse.Namespace) -> int:
+    """Load fresh regional carbon-intensity data from the UK Carbon Intensity API into DuckDB."""
+    settings = get_settings()
+    readings = fetch_regional_intensity(settings)
+    conn = get_connection(settings.duckdb_path)
+    try:
+        init_schema(conn)
+        count = load_regional_intensity(conn, readings)
+        print(f"Loaded {count} regional readings into DuckDB.")
         return 0
     finally:
         conn.close()
@@ -56,6 +75,7 @@ def main(argv: list[str] | None = None) -> int:
 
     subparsers.add_parser("load", help="load intensity data from the API")
     subparsers.add_parser("load-generation", help="load generation-mix data from the API")
+    subparsers.add_parser("load-regional", help="load regional carbon-intensity data from the API")
     subparsers.add_parser("info", help="show configuration and warehouse status")
 
     args = parser.parse_args(argv)
@@ -63,6 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     commands: dict[str, Callable[[argparse.Namespace], int]] = {
         "load": cmd_load,
         "load-generation": cmd_load_generation,
+        "load-regional": cmd_load_regional,
         "info": cmd_info,
     }
 
