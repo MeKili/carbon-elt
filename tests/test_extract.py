@@ -1,5 +1,9 @@
 """Tests for parsing carbon-intensity API payloads (no network access)."""
 
+from __future__ import annotations
+
+import pytest
+
 from carbon_elt.extract import parse_generation, parse_intensity, parse_regional_intensity
 
 SAMPLE_PAYLOAD = {
@@ -88,3 +92,59 @@ def test_parse_regional_intensity_reads_multiple_regions() -> None:
 
 def test_parse_regional_intensity_handles_empty_data() -> None:
     assert parse_regional_intensity({"data": []}) == []
+
+
+def test_parse_intensity_raises_on_missing_from() -> None:
+    payload = {"data": [{"to": "2026-01-20T12:30Z", "intensity": {"forecast": 200}}]}
+    with pytest.raises(
+        ValueError, match="Missing required field 'from' in intensity data at index 0"
+    ):
+        parse_intensity(payload)
+
+
+def test_parse_intensity_raises_on_missing_to() -> None:
+    payload = {"data": [{"from": "2026-01-20T12:00Z", "intensity": {"forecast": 200}}]}
+    with pytest.raises(
+        ValueError, match="Missing required field 'to' in intensity data at index 0"
+    ):
+        parse_intensity(payload)
+
+
+def test_parse_generation_raises_on_missing_from() -> None:
+    payload = {"data": [{"to": "2026-01-20T12:30Z", "generationmix": [("coal", 5.2)]}]}
+    with pytest.raises(
+        ValueError, match="Missing required field 'from' in generation data at index 0"
+    ):
+        parse_generation(payload)
+
+
+def test_parse_generation_raises_on_missing_to() -> None:
+    payload = {"data": [{"from": "2026-01-20T12:00Z", "generationmix": [("coal", 5.2)]}]}
+    with pytest.raises(
+        ValueError, match="Missing required field 'to' in generation data at index 0"
+    ):
+        parse_generation(payload)
+
+
+def test_parse_regional_intensity_raises_on_missing_from() -> None:
+    payload = {"data": [{"to": "2026-01-20T12:30Z", "regionid": "SE", "intensity": {}}]}
+    with pytest.raises(
+        ValueError, match="Missing required field 'from' in regional data at index 0"
+    ):
+        parse_regional_intensity(payload)
+
+
+def test_parse_regional_intensity_raises_on_missing_regionid() -> None:
+    payload = {
+        "data": [
+            {
+                "from": "2026-01-20T12:00Z",
+                "to": "2026-01-20T12:30Z",
+                "intensity": {"forecast": 200},
+            }
+        ]
+    }
+    with pytest.raises(
+        ValueError, match="Missing required field 'regionid' in regional data at index 0"
+    ):
+        parse_regional_intensity(payload)
