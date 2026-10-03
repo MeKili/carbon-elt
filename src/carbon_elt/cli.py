@@ -65,6 +65,31 @@ def cmd_info(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_status(args: argparse.Namespace) -> int:
+    """Show row counts and date ranges for all warehouse tables."""
+    settings = get_settings()
+    conn = get_connection(settings.duckdb_path)
+    try:
+        init_schema(conn)
+        tables = [
+            ("raw_national_intensity", "Intensity"),
+            ("raw_generation", "Generation"),
+            ("raw_regional_intensity", "Regional"),
+        ]
+        print("Warehouse status:")
+        for table_name, label in tables:
+            result = conn.execute(
+                f"SELECT COUNT(*) as cnt, MIN(valid_from) as min_time, MAX(valid_to) as max_time "
+                f"FROM {table_name}"
+            ).fetchall()
+            count, min_time, max_time = result[0]
+            date_range = f"{min_time.date()} to {max_time.date()}" if min_time else "no data"
+            print(f"  {label:15} {count:6} rows  ({date_range})")
+        return 0
+    finally:
+        conn.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run the requested command."""
     parser = argparse.ArgumentParser(
@@ -76,7 +101,8 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("load", help="load intensity data from the API")
     subparsers.add_parser("load-generation", help="load generation-mix data from the API")
     subparsers.add_parser("load-regional", help="load regional carbon-intensity data from the API")
-    subparsers.add_parser("info", help="show configuration and warehouse status")
+    subparsers.add_parser("info", help="show configuration and warehouse path")
+    subparsers.add_parser("status", help="show warehouse table statistics")
 
     args = parser.parse_args(argv)
 
@@ -85,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         "load-generation": cmd_load_generation,
         "load-regional": cmd_load_regional,
         "info": cmd_info,
+        "status": cmd_status,
     }
 
     if not args.command:

@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from carbon_elt.cli import cmd_info, cmd_load, cmd_load_generation, cmd_load_regional, main
+from carbon_elt.cli import (
+    cmd_info,
+    cmd_load,
+    cmd_load_generation,
+    cmd_load_regional,
+    cmd_status,
+    main,
+)
 
 
 def test_cmd_load_calls_pipeline() -> None:
@@ -90,6 +98,33 @@ def test_main_with_info_command() -> None:
     with patch("carbon_elt.cli.cmd_info") as mock_cmd:
         mock_cmd.return_value = 0
         result = main(["info"])
+        assert result == 0
+
+
+def test_cmd_status_shows_warehouse_stats() -> None:
+    """Test that status command queries and displays warehouse statistics."""
+    with (
+        patch("carbon_elt.cli.get_settings") as mock_settings,
+        patch("carbon_elt.cli.get_connection") as mock_conn,
+        patch("carbon_elt.cli.init_schema"),
+    ):
+        mock_settings.return_value.duckdb_path = ":memory:"
+        mock_connection = MagicMock()
+        mock_conn.return_value = mock_connection
+        mock_connection.execute.return_value.fetchall.return_value = [
+            (48, datetime(2025, 1, 1), datetime(2025, 1, 2))
+        ]
+
+        result = cmd_status(MagicMock())
+        assert result == 0
+        mock_connection.execute.assert_called()
+
+
+def test_main_with_status_command() -> None:
+    """Test main function with status command."""
+    with patch("carbon_elt.cli.cmd_status") as mock_cmd:
+        mock_cmd.return_value = 0
+        result = main(["status"])
         assert result == 0
 
 
