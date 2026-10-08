@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+IndexLevel = Literal["low", "moderate", "high", "very_high", "unknown"]
 
 
 class IntensityReading(BaseModel):
@@ -14,7 +17,9 @@ class IntensityReading(BaseModel):
     valid_to: datetime = Field(..., description="End of the half-hour window (UTC)")
     forecast: int | None = Field(None, description="Forecast carbon intensity (gCO₂/kWh)")
     actual: int | None = Field(None, description="Actual carbon intensity (gCO₂/kWh)")
-    index: str = Field(..., description="Index category (very low, low, moderate, high, very high)")
+    index: IndexLevel = Field(
+        ..., description="Index category (low, moderate, high, very_high, unknown)"
+    )
 
 
 class GenerationReading(BaseModel):
@@ -34,4 +39,6 @@ class RegionalIntensityReading(BaseModel):
     region_code: str = Field(..., description="Regional identifier (e.g. N, E, SE)")
     forecast: int | None = Field(None, description="Forecast carbon intensity (gCO₂/kWh)")
     actual: int | None = Field(None, description="Actual carbon intensity (gCO₂/kWh)")
-    index: str = Field(..., description="Index category (very low, low, moderate, high, very high)")
+    index: IndexLevel = Field(
+        ..., description="Index category (low, moderate, high, very_high, unknown)"
+    )

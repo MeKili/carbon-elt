@@ -148,3 +148,32 @@ def test_parse_regional_intensity_raises_on_missing_regionid() -> None:
         ValueError, match="Missing required field 'regionid' in regional data at index 0"
     ):
         parse_regional_intensity(payload)
+
+
+def test_parse_intensity_rejects_invalid_index() -> None:
+    payload = {
+        "data": [
+            {
+                "from": "2026-01-20T12:00Z",
+                "to": "2026-01-20T12:30Z",
+                "intensity": {"forecast": 200, "actual": 187, "index": "invalid_index"},
+            }
+        ]
+    }
+    with pytest.raises(ValueError):
+        parse_intensity(payload)
+
+
+def test_parse_regional_intensity_rejects_invalid_index() -> None:
+    payload = {
+        "data": [
+            {
+                "from": "2026-01-20T12:00Z",
+                "to": "2026-01-20T12:30Z",
+                "regionid": "SE",
+                "intensity": {"forecast": 210, "actual": 195, "index": "invalid_index"},
+            }
+        ]
+    }
+    with pytest.raises(ValueError):
+        parse_regional_intensity(payload)
