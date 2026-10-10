@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import subprocess
+
 from dagster import asset
 
 from carbon_elt.config import get_settings
@@ -59,3 +61,17 @@ def load_warehouse(
         }
     finally:
         conn.close()
+
+
+@asset
+def dbt_models(load_warehouse: dict[str, int]) -> dict[str, str]:
+    """Run dbt models to transform raw data into staging and mart tables."""
+    result = subprocess.run(
+        ["dbt", "run"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"dbt run failed: {result.stderr}")
+    return {"status": "success", "output": result.stdout}

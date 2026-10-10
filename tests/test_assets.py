@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from carbon_elt.assets import (
     carbon_intensity_readings,
+    dbt_models,
     generation_mix_readings,
     load_warehouse,
     regional_intensity_readings,
@@ -99,3 +100,15 @@ def test_load_warehouse_asset() -> None:
         assert result["generation"] == 1
         assert result["regional"] == 1
         mock_conn.close.assert_called_once()
+
+
+def test_dbt_models_asset() -> None:
+    load_warehouse_result = {"intensity": 10, "generation": 20, "regional": 30}
+    mock_process = MagicMock()
+    mock_process.returncode = 0
+    mock_process.stdout = "4 of 7 models succeeded"
+    mock_process.stderr = ""
+    with patch("carbon_elt.assets.subprocess.run", return_value=mock_process):
+        result = dbt_models(load_warehouse_result)
+        assert result["status"] == "success"
+        assert "succeeded" in result["output"]
