@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
+import httpx
 import pytest
 
-from carbon_elt.extract import parse_generation, parse_intensity, parse_regional_intensity
+from carbon_elt.extract import (
+    _fetch_with_retry,
+    parse_generation,
+    parse_intensity,
+    parse_regional_intensity,
+)
 
 SAMPLE_PAYLOAD = {
     "data": [
@@ -177,3 +185,56 @@ def test_parse_regional_intensity_rejects_invalid_index() -> None:
     }
     with pytest.raises(ValueError):
         parse_regional_intensity(payload)
+
+
+@patch("carbon_elt.extract.httpx.get")
+def test_fetch_with_retry_succeeds_on_first_try(mock_get: MagicMock) -> None:
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"data": []}
+    mock_get.return_value = mock_response
+
+    response = _fetch_with_retry("http://example.com", timeout=5.0)
+    assert response == mock_response
+    assert mock_get.call_count == 1
+
+
+@patch("carbon_elt.extract.time.sleep")
+@patch("carbon_elt.extract.httpx.get")
+def test_fetch_with_retry_succeeds_after_timeout(
+    mock_get: MagicMock, mock_sleep: MagicMock
+) -> None:
+    mock_response = MagicMock()
+    mock_get.side_effect = [
+        httpx.TimeoutException("timeout"),
+        httpx.TimeoutException("timeout"),
+        mock_response,
+    ]
+
+    response = _fetch_with_retry("http://example.com", timeout=5.0, max_retries=3)
+    assert response == mock_response
+    assert mock_get.call_count == 3
+    assert mock_sleep.call_count == 2
+
+
+@patch("carbon_elt.extract.httpx.get")
+def test_fetch_with_retry_fails_after_max_retries(mock_get: MagicMock) -> None:
+    mock_get.side_effect = httpx.TimeoutException("timeout")
+
+    with pytest.raises(httpx.TimeoutException):
+        _fetch_with_retry("http://example.com", timeout=5.0, max_retries=2)
+
+    assert mock_get.call_count == 2
+
+
+@patch("carbon_elt.extract.httpx.get")
+def test_fetch_with_retry_raises_immediately_on_client_error(mock_get: MagicMock) -> None:
+    response = MagicMock()
+    response.status_code = 404
+    mock_get.side_effect = httpx.HTTPStatusError(
+        "not found", request=MagicMock(), response=response
+    )
+
+    with pytest.raises(httpx.HTTPStatusError):
+        _fetch_with_retry("http://example.com", timeout=5.0)
+
+    assert mock_get.call_count == 1
