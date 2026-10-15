@@ -1,0 +1,133 @@
+version: 2
+
+models:
+  - name: stg_national_intensity
+    description: Staging layer for national carbon-intensity readings
+    columns:
+      - name: valid_from
+        description: Start of the half-hour window
+        tests:
+          - not_null
+      - name: valid_to
+        description: End of the half-hour window
+        tests:
+          - not_null
+      - name: index
+        description: Carbon-intensity index category
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['low', 'moderate', 'high', 'very_high', 'unknown']
+
+  - name: stg_regional_intensity
+    description: Staging layer for regional carbon-intensity readings
+    columns:
+      - name: valid_from
+        tests:
+          - not_null
+      - name: valid_to
+        tests:
+          - not_null
+      - name: region_code
+        description: Regional identifier
+        tests:
+          - not_null
+      - name: index
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['low', 'moderate', 'high', 'very_high', 'unknown']
+
+  - name: stg_generation
+    description: Staging layer for generation mix data
+    columns:
+      - name: valid_from
+        tests:
+          - not_null
+      - name: valid_to
+        tests:
+          - not_null
+      - name: fuel_type
+        description: Fuel source type
+        tests:
+          - not_null
+      - name: percentage
+        description: Percentage of grid supply
+        tests:
+          - not_null
+
+  - name: mart_daily_intensity
+    description: Daily average carbon intensity aggregation
+    columns:
+      - name: intensity_date
+        description: Date of the aggregation
+        tests:
+          - not_null
+          - unique
+      - name: avg_actual_intensity
+        description: Average actual carbon intensity
+        tests:
+          - not_null
+      - name: avg_forecast_intensity
+        tests:
+          - not_null
+      - name: reading_count
+        tests:
+          - not_null
+
+  - name: mart_daily_index_share
+    description: Daily share of time per carbon-intensity index
+    columns:
+      - name: intensity_date
+        description: Date of the aggregation
+        tests:
+          - not_null
+      - name: index
+        description: Carbon-intensity index category
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['low', 'moderate', 'high', 'very_high']
+      - name: share_percent
+        description: Percentage share of the day
+        tests:
+          - not_null
+
+  - name: mart_regional_daily_intensity
+    description: Daily average regional carbon intensity
+    columns:
+      - name: intensity_date
+        description: Date of the aggregation
+        tests:
+          - not_null
+      - name: region_code
+        description: Regional identifier
+        tests:
+          - not_null
+      - name: avg_actual_intensity
+        description: Average actual carbon intensity
+        tests:
+          - not_null
+      - name: avg_forecast_intensity
+        tests:
+          - not_null
+      - name: reading_count
+        description: Number of readings
+        tests:
+          - not_null
+
+  - name: mart_daily_generation_mix
+    description: Daily average generation mix by fuel type
+    columns:
+      - name: generation_date
+        description: Date of the aggregation
+        tests:
+          - not_null
+      - name: fuel_type
+        description: Fuel source type
+        tests:
+          - not_null
+      - name: avg_percentage
+        description: Average percentage of grid supply
+        tests:
+          - not_null
