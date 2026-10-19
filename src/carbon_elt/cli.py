@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from collections.abc import Callable
 
@@ -90,6 +91,16 @@ def cmd_status(args: argparse.Namespace) -> int:
         conn.close()
 
 
+def cmd_transform(args: argparse.Namespace) -> int:
+    """Run dbt models to transform raw data into staging and mart tables."""
+    result = subprocess.run(["dbt", "run"], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        print(result.stderr, file=sys.stderr)
+        return result.returncode
+    print(result.stdout)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run the requested command."""
     parser = argparse.ArgumentParser(
@@ -103,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("load-regional", help="load regional carbon-intensity data from the API")
     subparsers.add_parser("info", help="show configuration and warehouse path")
     subparsers.add_parser("status", help="show warehouse table statistics")
+    subparsers.add_parser("transform", help="run dbt models to transform raw data")
 
     args = parser.parse_args(argv)
 
@@ -112,6 +124,7 @@ def main(argv: list[str] | None = None) -> int:
         "load-regional": cmd_load_regional,
         "info": cmd_info,
         "status": cmd_status,
+        "transform": cmd_transform,
     }
 
     if not args.command:

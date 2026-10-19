@@ -13,6 +13,7 @@ from carbon_elt.cli import (
     cmd_load_generation,
     cmd_load_regional,
     cmd_status,
+    cmd_transform,
     main,
 )
 
@@ -132,3 +133,30 @@ def test_main_with_unknown_command() -> None:
     """Test main function with unknown command."""
     with pytest.raises(SystemExit):
         main(["unknown"])
+
+
+def test_cmd_transform_runs_dbt() -> None:
+    """Test that transform command runs dbt models."""
+    with patch("carbon_elt.cli.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="Models built", stderr="")
+        result = cmd_transform(MagicMock())
+        assert result == 0
+        mock_run.assert_called_once_with(
+            ["dbt", "run"], capture_output=True, text=True, check=False
+        )
+
+
+def test_cmd_transform_handles_dbt_error() -> None:
+    """Test that transform command reports dbt errors."""
+    with patch("carbon_elt.cli.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="dbt error")
+        result = cmd_transform(MagicMock())
+        assert result == 1
+
+
+def test_main_with_transform_command() -> None:
+    """Test main function with transform command."""
+    with patch("carbon_elt.cli.cmd_transform") as mock_cmd:
+        mock_cmd.return_value = 0
+        result = main(["transform"])
+        assert result == 0
