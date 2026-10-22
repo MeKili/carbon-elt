@@ -1,5 +1,7 @@
 {{ config(
-    materialized='table'
+    materialized='incremental',
+    unique_key=['intensity_date', 'index'],
+    on_schema_change='fail'
 ) }}
 
 select
@@ -8,5 +10,8 @@ select
     round(100.0 * count(*) / sum(count(*)) over (partition by date(valid_from)), 1) as share_percent
 from {{ ref('stg_national_intensity') }}
 where index is not null and index != 'unknown'
+{% if execute and flags.full_refresh == False %}
+    and date(valid_from) > (select coalesce(max(intensity_date), '1900-01-01') from {{ this }})
+{% endif %}
 group by intensity_date, index
 order by intensity_date desc, share_percent desc
