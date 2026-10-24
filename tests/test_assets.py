@@ -13,6 +13,7 @@ from carbon_elt.models import GenerationReading, IntensityReading, RegionalInten
 
 
 def test_carbon_intensity_readings_asset() -> None:
+    """Fetch national carbon intensity readings via asset."""
     intensity_data = [
         IntensityReading(
             valid_from="2026-01-20T12:00Z",
@@ -29,6 +30,7 @@ def test_carbon_intensity_readings_asset() -> None:
 
 
 def test_generation_mix_readings_asset() -> None:
+    """Fetch generation mix data via asset."""
     generation_data = [
         GenerationReading(
             valid_from="2026-01-20T12:00Z",
@@ -44,6 +46,7 @@ def test_generation_mix_readings_asset() -> None:
 
 
 def test_regional_intensity_readings_asset() -> None:
+    """Fetch regional intensity readings via asset."""
     regional_data = [
         RegionalIntensityReading(
             valid_from="2026-01-20T12:00Z",
@@ -61,6 +64,7 @@ def test_regional_intensity_readings_asset() -> None:
 
 
 def test_load_warehouse_asset() -> None:
+    """Load fetched data into DuckDB warehouse."""
     intensity_data = [
         IntensityReading(
             valid_from="2026-01-20T12:00Z",
@@ -103,6 +107,7 @@ def test_load_warehouse_asset() -> None:
 
 
 def test_dbt_models_asset() -> None:
+    """Run dbt models to transform raw data."""
     load_warehouse_result = {"intensity": 10, "generation": 20, "regional": 30}
     mock_process = MagicMock()
     mock_process.returncode = 0

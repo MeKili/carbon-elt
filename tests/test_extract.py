@@ -26,6 +26,7 @@ SAMPLE_PAYLOAD = {
 
 
 def test_parse_intensity_reads_a_row() -> None:
+    """Parse single intensity reading from payload."""
     readings = parse_intensity(SAMPLE_PAYLOAD)
     assert len(readings) == 1
     reading = readings[0]
@@ -35,6 +36,7 @@ def test_parse_intensity_reads_a_row() -> None:
 
 
 def test_parse_intensity_handles_empty_data() -> None:
+    """Return empty list for empty intensity payload."""
     assert parse_intensity({"data": []}) == []
 
 
@@ -56,6 +58,7 @@ SAMPLE_GENERATION_PAYLOAD = {
 
 
 def test_parse_generation_reads_fuel_types() -> None:
+    """Parse generation mix data with multiple fuel types."""
     readings = parse_generation(SAMPLE_GENERATION_PAYLOAD)
     assert len(readings) == 5
     fuels = {r.fuel_type: r.percentage for r in readings}
@@ -67,6 +70,7 @@ def test_parse_generation_reads_fuel_types() -> None:
 
 
 def test_parse_generation_handles_empty_data() -> None:
+    """Return empty list for empty generation payload."""
     assert parse_generation({"data": []}) == []
 
 
@@ -89,6 +93,7 @@ SAMPLE_REGIONAL_PAYLOAD = {
 
 
 def test_parse_regional_intensity_reads_multiple_regions() -> None:
+    """Parse regional intensity data for multiple regions."""
     readings = parse_regional_intensity(SAMPLE_REGIONAL_PAYLOAD)
     assert len(readings) == 2
     regions = {r.region_code: r for r in readings}
@@ -99,10 +104,12 @@ def test_parse_regional_intensity_reads_multiple_regions() -> None:
 
 
 def test_parse_regional_intensity_handles_empty_data() -> None:
+    """Return empty list for empty regional payload."""
     assert parse_regional_intensity({"data": []}) == []
 
 
 def test_parse_intensity_raises_on_missing_from() -> None:
+    """Raise ValueError when 'from' field is missing."""
     payload = {"data": [{"to": "2026-01-20T12:30Z", "intensity": {"forecast": 200}}]}
     with pytest.raises(
         ValueError, match="Missing required field 'from' in intensity data at index 0"
@@ -111,6 +118,7 @@ def test_parse_intensity_raises_on_missing_from() -> None:
 
 
 def test_parse_intensity_raises_on_missing_to() -> None:
+    """Raise ValueError when 'to' field is missing."""
     payload = {"data": [{"from": "2026-01-20T12:00Z", "intensity": {"forecast": 200}}]}
     with pytest.raises(
         ValueError, match="Missing required field 'to' in intensity data at index 0"
@@ -119,6 +127,7 @@ def test_parse_intensity_raises_on_missing_to() -> None:
 
 
 def test_parse_generation_raises_on_missing_from() -> None:
+    """Raise ValueError when 'from' field is missing in generation data."""
     payload = {"data": [{"to": "2026-01-20T12:30Z", "generationmix": [("coal", 5.2)]}]}
     with pytest.raises(
         ValueError, match="Missing required field 'from' in generation data at index 0"
@@ -127,6 +136,7 @@ def test_parse_generation_raises_on_missing_from() -> None:
 
 
 def test_parse_generation_raises_on_missing_to() -> None:
+    """Raise ValueError when 'to' field is missing in generation data."""
     payload = {"data": [{"from": "2026-01-20T12:00Z", "generationmix": [("coal", 5.2)]}]}
     with pytest.raises(
         ValueError, match="Missing required field 'to' in generation data at index 0"
@@ -135,6 +145,7 @@ def test_parse_generation_raises_on_missing_to() -> None:
 
 
 def test_parse_regional_intensity_raises_on_missing_from() -> None:
+    """Raise ValueError when 'from' field is missing in regional data."""
     payload = {"data": [{"to": "2026-01-20T12:30Z", "regionid": "SE", "intensity": {}}]}
     with pytest.raises(
         ValueError, match="Missing required field 'from' in regional data at index 0"
@@ -143,6 +154,7 @@ def test_parse_regional_intensity_raises_on_missing_from() -> None:
 
 
 def test_parse_regional_intensity_raises_on_missing_regionid() -> None:
+    """Raise ValueError when 'regionid' field is missing."""
     payload = {
         "data": [
             {
@@ -159,6 +171,7 @@ def test_parse_regional_intensity_raises_on_missing_regionid() -> None:
 
 
 def test_parse_intensity_rejects_invalid_index() -> None:
+    """Reject intensity reading with invalid index value."""
     payload = {
         "data": [
             {
@@ -173,6 +186,7 @@ def test_parse_intensity_rejects_invalid_index() -> None:
 
 
 def test_parse_regional_intensity_rejects_invalid_index() -> None:
+    """Reject regional intensity reading with invalid index value."""
     payload = {
         "data": [
             {
@@ -189,6 +203,7 @@ def test_parse_regional_intensity_rejects_invalid_index() -> None:
 
 @patch("carbon_elt.extract.httpx.get")
 def test_fetch_with_retry_succeeds_on_first_try(mock_get: MagicMock) -> None:
+    """Fetch succeeds immediately on first request."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"data": []}
     mock_get.return_value = mock_response
@@ -203,6 +218,7 @@ def test_fetch_with_retry_succeeds_on_first_try(mock_get: MagicMock) -> None:
 def test_fetch_with_retry_succeeds_after_timeout(
     mock_get: MagicMock, mock_sleep: MagicMock
 ) -> None:
+    """Fetch succeeds after retrying on timeout."""
     mock_response = MagicMock()
     mock_get.side_effect = [
         httpx.TimeoutException("timeout"),
@@ -218,6 +234,7 @@ def test_fetch_with_retry_succeeds_after_timeout(
 
 @patch("carbon_elt.extract.httpx.get")
 def test_fetch_with_retry_fails_after_max_retries(mock_get: MagicMock) -> None:
+    """Raise error after exhausting retry attempts."""
     mock_get.side_effect = httpx.TimeoutException("timeout")
 
     with pytest.raises(httpx.TimeoutException):
@@ -228,6 +245,7 @@ def test_fetch_with_retry_fails_after_max_retries(mock_get: MagicMock) -> None:
 
 @patch("carbon_elt.extract.httpx.get")
 def test_fetch_with_retry_raises_immediately_on_client_error(mock_get: MagicMock) -> None:
+    """Raise immediately on 4xx/5xx client errors without retrying."""
     response = MagicMock()
     response.status_code = 404
     mock_get.side_effect = httpx.HTTPStatusError(

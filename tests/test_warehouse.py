@@ -16,6 +16,7 @@ from carbon_elt.warehouse import (
 
 
 def test_load_readings_inserts_rows() -> None:
+    """Insert intensity readings into warehouse."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
@@ -37,6 +38,7 @@ def test_load_readings_inserts_rows() -> None:
 
 
 def test_daily_index_share_calculation() -> None:
+    """Count intensity readings by index level for daily statistics."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
@@ -89,6 +91,7 @@ def test_daily_index_share_calculation() -> None:
 
 
 def test_load_generation_inserts_rows() -> None:
+    """Insert generation mix readings into warehouse."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
@@ -122,6 +125,7 @@ def test_load_generation_inserts_rows() -> None:
 
 
 def test_load_readings_is_idempotent() -> None:
+    """Reloading same readings doesn't create duplicates."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
@@ -150,6 +154,7 @@ def test_load_readings_is_idempotent() -> None:
 
 
 def test_load_generation_is_idempotent() -> None:
+    """Reloading same generation data doesn't create duplicates."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
@@ -183,6 +188,7 @@ def test_load_generation_is_idempotent() -> None:
 
 
 def test_load_regional_intensity_inserts_rows() -> None:
+    """Insert regional intensity readings into warehouse."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
@@ -213,6 +219,7 @@ def test_load_regional_intensity_inserts_rows() -> None:
 
 
 def test_load_regional_intensity_is_idempotent() -> None:
+    """Reloading same regional readings doesn't create duplicates."""
     conn = get_connection(":memory:")
     init_schema(conn)
     readings = [
