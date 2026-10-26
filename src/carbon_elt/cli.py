@@ -101,6 +101,16 @@ def cmd_transform(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_test(args: argparse.Namespace) -> int:
+    """Run dbt tests to validate raw data and mart tables against constraints."""
+    result = subprocess.run(["dbt", "test"], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        print(result.stderr, file=sys.stderr)
+        return result.returncode
+    print(result.stdout)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run the requested command."""
     parser = argparse.ArgumentParser(
@@ -115,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("info", help="show configuration and warehouse path")
     subparsers.add_parser("status", help="show warehouse table statistics")
     subparsers.add_parser("transform", help="run dbt models to transform raw data")
+    subparsers.add_parser("test", help="run dbt tests to validate data constraints")
 
     args = parser.parse_args(argv)
 
@@ -125,6 +136,7 @@ def main(argv: list[str] | None = None) -> int:
         "info": cmd_info,
         "status": cmd_status,
         "transform": cmd_transform,
+        "test": cmd_test,
     }
 
     if not args.command:
