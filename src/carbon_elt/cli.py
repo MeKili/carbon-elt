@@ -111,6 +111,16 @@ def cmd_test(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_seed(args: argparse.Namespace) -> int:
+    """Load reference and test data from dbt seeds into the warehouse."""
+    result = subprocess.run(["dbt", "seed"], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        print(result.stderr, file=sys.stderr)
+        return result.returncode
+    print(result.stdout)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run the requested command."""
     parser = argparse.ArgumentParser(
@@ -124,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("load-regional", help="load regional carbon-intensity data from the API")
     subparsers.add_parser("info", help="show configuration and warehouse path")
     subparsers.add_parser("status", help="show warehouse table statistics")
+    subparsers.add_parser("seed", help="load reference data from dbt seeds")
     subparsers.add_parser("transform", help="run dbt models to transform raw data")
     subparsers.add_parser("test", help="run dbt tests to validate data constraints")
 
@@ -135,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
         "load-regional": cmd_load_regional,
         "info": cmd_info,
         "status": cmd_status,
+        "seed": cmd_seed,
         "transform": cmd_transform,
         "test": cmd_test,
     }

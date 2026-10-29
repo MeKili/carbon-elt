@@ -12,6 +12,7 @@ from carbon_elt.cli import (
     cmd_load,
     cmd_load_generation,
     cmd_load_regional,
+    cmd_seed,
     cmd_status,
     cmd_test,
     cmd_transform,
@@ -182,9 +183,36 @@ def test_cmd_test_handles_dbt_error() -> None:
         assert result == 1
 
 
+def test_cmd_seed_runs_dbt() -> None:
+    """Test that seed command runs dbt seed."""
+    with patch("carbon_elt.cli.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="Seeds loaded", stderr="")
+        result = cmd_seed(MagicMock())
+        assert result == 0
+        mock_run.assert_called_once_with(
+            ["dbt", "seed"], capture_output=True, text=True, check=False
+        )
+
+
+def test_cmd_seed_handles_dbt_error() -> None:
+    """Test that seed command reports dbt seed failures."""
+    with patch("carbon_elt.cli.subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="seed failed")
+        result = cmd_seed(MagicMock())
+        assert result == 1
+
+
 def test_main_with_test_command() -> None:
     """Test main function with test command."""
     with patch("carbon_elt.cli.cmd_test") as mock_cmd:
         mock_cmd.return_value = 0
         result = main(["test"])
+        assert result == 0
+
+
+def test_main_with_seed_command() -> None:
+    """Test main function with seed command."""
+    with patch("carbon_elt.cli.cmd_seed") as mock_cmd:
+        mock_cmd.return_value = 0
+        result = main(["seed"])
         assert result == 0
