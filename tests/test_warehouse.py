@@ -246,3 +246,19 @@ def test_load_regional_intensity_is_idempotent() -> None:
     assert result is not None
     assert result[0] == 1
     conn.close()
+
+
+def test_init_schema_creates_indexes() -> None:
+    """Verify that indexes are created on warehouse tables."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    result = conn.execute("SELECT index_name FROM duckdb_indexes()").fetchall()
+    index_names = [row[0] for row in result]
+
+    assert f"idx_{RAW_TABLE}_time" in index_names
+    assert f"idx_{RAW_GENERATION_TABLE}_time" in index_names
+    assert f"idx_{RAW_GENERATION_TABLE}_fuel" in index_names
+    assert f"idx_{RAW_REGIONAL_TABLE}_time" in index_names
+    assert f"idx_{RAW_REGIONAL_TABLE}_region" in index_names
+    conn.close()

@@ -31,12 +31,30 @@ def init_schema(conn: duckdb.DuckDBPyConnection) -> None:
     )
     conn.execute(
         f"""
+        CREATE INDEX IF NOT EXISTS idx_{RAW_TABLE}_time
+        ON {RAW_TABLE} (valid_from, valid_to)
+        """
+    )
+    conn.execute(
+        f"""
         CREATE TABLE IF NOT EXISTS {RAW_GENERATION_TABLE} (
             valid_from TIMESTAMP,
             valid_to   TIMESTAMP,
             fuel_type  VARCHAR,
             percentage DOUBLE
         )
+        """
+    )
+    conn.execute(
+        f"""
+        CREATE INDEX IF NOT EXISTS idx_{RAW_GENERATION_TABLE}_time
+        ON {RAW_GENERATION_TABLE} (valid_from, valid_to)
+        """
+    )
+    conn.execute(
+        f"""
+        CREATE INDEX IF NOT EXISTS idx_{RAW_GENERATION_TABLE}_fuel
+        ON {RAW_GENERATION_TABLE} (fuel_type)
         """
     )
     conn.execute(
@@ -49,6 +67,18 @@ def init_schema(conn: duckdb.DuckDBPyConnection) -> None:
             actual     INTEGER,
             index      VARCHAR
         )
+        """
+    )
+    conn.execute(
+        f"""
+        CREATE INDEX IF NOT EXISTS idx_{RAW_REGIONAL_TABLE}_time
+        ON {RAW_REGIONAL_TABLE} (valid_from, valid_to)
+        """
+    )
+    conn.execute(
+        f"""
+        CREATE INDEX IF NOT EXISTS idx_{RAW_REGIONAL_TABLE}_region
+        ON {RAW_REGIONAL_TABLE} (region_code)
         """
     )
 
