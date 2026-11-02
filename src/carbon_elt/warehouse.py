@@ -88,7 +88,7 @@ def load_readings(conn: duckdb.DuckDBPyConnection, readings: list[IntensityReadi
     if not readings:
         return 0
     rows = [(r.valid_from, r.valid_to, r.forecast, r.actual, r.index) for r in readings]
-    time_windows = [(r[0], r[1]) for r in rows]
+    time_windows = set((r[0], r[1]) for r in rows)
     for valid_from, valid_to in time_windows:
         conn.execute(
             f"DELETE FROM {RAW_TABLE} WHERE valid_from = ? AND valid_to = ?",
