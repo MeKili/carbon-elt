@@ -10,6 +10,7 @@ from collections.abc import Callable
 from carbon_elt.config import get_settings
 from carbon_elt.extract import fetch_generation, fetch_regional_intensity
 from carbon_elt.pipeline import run
+from carbon_elt.stats import get_all_stats, get_intensity_index_distribution
 from carbon_elt.warehouse import (
     get_connection,
     init_schema,
@@ -67,25 +68,29 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    """Show row counts and date ranges for all warehouse tables."""
+    """Show row counts and date ranges for all warehouse tables with intensity distribution."""
     settings = get_settings()
     conn = get_connection(settings.duckdb_path)
     try:
         init_schema(conn)
-        tables = [
+        stats = get_all_stats(conn)
+        print("Warehouse status:")
+        for table_name, label in [
             ("raw_national_intensity", "Intensity"),
             ("raw_generation", "Generation"),
             ("raw_regional_intensity", "Regional"),
-        ]
-        print("Warehouse status:")
-        for table_name, label in tables:
-            result = conn.execute(
-                f"SELECT COUNT(*) as cnt, MIN(valid_from) as min_time, MAX(valid_to) as max_time "
-                f"FROM {table_name}"
-            ).fetchall()
-            count, min_time, max_time = result[0]
-            date_range = f"{min_time.date()} to {max_time.date()}" if min_time else "no data"
-            print(f"  {label:15} {count:6} rows  ({date_range})")
+        ]:
+            table_stat = stats[table_name]
+            if table_stat.min_date and table_stat.max_date:
+                date_range = f"{table_stat.min_date.date()} to {table_stat.max_date.date()}"
+            else:
+                date_range = "no data"
+            print(f"  {label:15} {table_stat.row_count:6} rows  ({date_range})")
+        distribution = get_intensity_index_distribution(conn)
+        if distribution:
+            print("\nIntensity index distribution:")
+            for index, count in sorted(distribution.items()):
+                print(f"  {index:15} {count:6} readings")
         return 0
     finally:
         conn.close()

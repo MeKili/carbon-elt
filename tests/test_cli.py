@@ -106,21 +106,31 @@ def test_main_with_info_command() -> None:
 
 def test_cmd_status_shows_warehouse_stats() -> None:
     """Test that status command queries and displays warehouse statistics."""
+    from carbon_elt.stats import TableStats
+
     with (
         patch("carbon_elt.cli.get_settings") as mock_settings,
         patch("carbon_elt.cli.get_connection") as mock_conn,
         patch("carbon_elt.cli.init_schema"),
+        patch("carbon_elt.cli.get_all_stats") as mock_stats,
+        patch("carbon_elt.cli.get_intensity_index_distribution") as mock_dist,
     ):
         mock_settings.return_value.duckdb_path = ":memory:"
         mock_connection = MagicMock()
         mock_conn.return_value = mock_connection
-        mock_connection.execute.return_value.fetchall.return_value = [
-            (48, datetime(2025, 1, 1), datetime(2025, 1, 2))
-        ]
+        mock_stats.return_value = {
+            "raw_national_intensity": TableStats(
+                "raw_national_intensity", 48, datetime(2025, 1, 1), datetime(2025, 1, 2)
+            ),
+            "raw_generation": TableStats("raw_generation", 0, None, None),
+            "raw_regional_intensity": TableStats("raw_regional_intensity", 0, None, None),
+        }
+        mock_dist.return_value = {"moderate": 30, "high": 18}
 
         result = cmd_status(MagicMock())
         assert result == 0
-        mock_connection.execute.assert_called()
+        mock_stats.assert_called_once()
+        mock_dist.assert_called_once()
 
 
 def test_main_with_status_command() -> None:
