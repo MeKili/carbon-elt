@@ -224,6 +224,10 @@ models:
         tests:
           - not_null
           - percentage_range
+    tests:
+      - percentages_sum_to_100:
+          column_name: avg_percentage
+          group_by_cols: generation_date
 
   - name: mart_regional_daily_intensity
     description: Daily aggregated regional carbon-intensity metrics
