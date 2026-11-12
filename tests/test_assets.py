@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 from carbon_elt.assets import (
+    carbon_elt_job,
     carbon_intensity_readings,
     dbt_models,
     generation_mix_readings,
@@ -117,3 +118,10 @@ def test_dbt_models_asset() -> None:
         result = dbt_models(load_warehouse_result)
         assert result["status"] == "success"
         assert "succeeded" in result["output"]
+
+
+def test_carbon_elt_job_definition() -> None:
+    """Job definition exists and is configured correctly."""
+    assert carbon_elt_job.name == "carbon_elt_pipeline"
+    assert carbon_elt_job.description is not None
+    assert "ELT" in carbon_elt_job.description

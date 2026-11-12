@@ -1,10 +1,10 @@
-"""Dagster assets for the carbon-elt ELT pipeline."""
+"""Dagster assets and jobs for the carbon-elt ELT pipeline."""
 
 from __future__ import annotations
 
 import subprocess
 
-from dagster import asset
+from dagster import asset, define_asset_job, in_process_executor
 
 from carbon_elt.config import get_settings
 from carbon_elt.extract import (
@@ -75,3 +75,11 @@ def dbt_models(load_warehouse: dict[str, int]) -> dict[str, str]:
     if result.returncode != 0:
         raise RuntimeError(f"dbt run failed: {result.stderr}")
     return {"status": "success", "output": result.stdout}
+
+
+carbon_elt_job = define_asset_job(
+    name="carbon_elt_pipeline",
+    description="End-to-end ELT pipeline: fetch API data, load warehouse, run dbt transforms",
+    executor_def=in_process_executor,
+    tags={"environment": "production", "owner": "carbon-elt"},
+)
