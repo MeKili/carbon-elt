@@ -10,7 +10,7 @@ from collections.abc import Callable
 from carbon_elt.config import get_settings
 from carbon_elt.extract import fetch_generation, fetch_regional_intensity
 from carbon_elt.pipeline import run
-from carbon_elt.stats import get_all_stats, get_intensity_index_distribution
+from carbon_elt.stats import get_all_stats, get_intensity_index_distribution, is_data_fresh
 from carbon_elt.warehouse import (
     get_connection,
     init_schema,
@@ -116,6 +116,39 @@ def cmd_test(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_freshness(args: argparse.Namespace) -> int:
+    """Check how fresh the warehouse data is (age of the latest readings)."""
+    settings = get_settings()
+    conn = get_connection(settings.duckdb_path)
+    try:
+        init_schema(conn)
+        stats = get_all_stats(conn)
+        print("Data freshness (age of latest reading):")
+        all_fresh = True
+        for table_name, label in [
+            ("raw_national_intensity", "Intensity"),
+            ("raw_generation", "Generation"),
+            ("raw_regional_intensity", "Regional"),
+        ]:
+            table_stat = stats[table_name]
+            if table_stat.age_hours is not None:
+                age_str = (
+                    f"{table_stat.age_hours:.1f} hours"
+                    if table_stat.age_hours >= 1
+                    else f"{table_stat.age_hours * 60:.0f} minutes"
+                )
+                fresh = is_data_fresh(conn, table_name, hours_threshold=2)
+                status = "✓ fresh" if fresh else "⚠ stale"
+                all_fresh = all_fresh and fresh
+                print(f"  {label:15} {age_str:15} ({status})")
+            else:
+                print(f"  {label:15} {'no data':15} (⚠ no data)")
+                all_fresh = False
+        return 0 if all_fresh else 1
+    finally:
+        conn.close()
+
+
 def cmd_seed(args: argparse.Namespace) -> int:
     """Load reference and test data from dbt seeds into the warehouse."""
     result = subprocess.run(["dbt", "seed"], capture_output=True, text=True, check=False)
@@ -139,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("load-regional", help="load regional carbon-intensity data from the API")
     subparsers.add_parser("info", help="show configuration and warehouse path")
     subparsers.add_parser("status", help="show warehouse table statistics")
+    subparsers.add_parser("freshness", help="check how fresh the warehouse data is")
     subparsers.add_parser("seed", help="load reference data from dbt seeds")
     subparsers.add_parser("transform", help="run dbt models to transform raw data")
     subparsers.add_parser("test", help="run dbt tests to validate data constraints")
@@ -151,6 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         "load-regional": cmd_load_regional,
         "info": cmd_info,
         "status": cmd_status,
+        "freshness": cmd_freshness,
         "seed": cmd_seed,
         "transform": cmd_transform,
         "test": cmd_test,

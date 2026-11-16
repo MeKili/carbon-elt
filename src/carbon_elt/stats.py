@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 import duckdb
 
@@ -22,6 +22,17 @@ class TableStats:
         """Number of days covered by data in this table."""
         if self.min_date and self.max_date:
             return (self.max_date.date() - self.min_date.date()).days + 1
+        return None
+
+    @property
+    def age_hours(self) -> float | None:
+        """Hours since the most recent reading in this table."""
+        if self.max_date:
+            now = datetime.now(UTC)
+            max_date_utc = (
+                self.max_date.replace(tzinfo=UTC) if self.max_date.tzinfo is None else self.max_date
+            )
+            return (now - max_date_utc).total_seconds() / 3600
         return None
 
 
@@ -66,3 +77,16 @@ def get_latest_reading_time(conn: duckdb.DuckDBPyConnection, table_name: str) ->
     """Get the most recent reading timestamp from a table."""
     result = conn.execute(f"SELECT MAX(valid_to) FROM {table_name}").fetchone()
     return result[0] if result and result[0] else None
+
+
+def is_data_fresh(
+    conn: duckdb.DuckDBPyConnection, table_name: str, hours_threshold: float = 2
+) -> bool:
+    """Check if the most recent reading is fresher than the threshold."""
+    latest = get_latest_reading_time(conn, table_name)
+    if latest is None:
+        return False
+    now = datetime.now(UTC)
+    latest_utc = latest.replace(tzinfo=UTC) if latest.tzinfo is None else latest
+    age = (now - latest_utc).total_seconds() / 3600
+    return age <= hours_threshold

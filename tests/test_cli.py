@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from carbon_elt.cli import (
+    cmd_freshness,
     cmd_info,
     cmd_load,
     cmd_load_generation,
@@ -225,4 +226,93 @@ def test_main_with_seed_command() -> None:
     with patch("carbon_elt.cli.cmd_seed") as mock_cmd:
         mock_cmd.return_value = 0
         result = main(["seed"])
+        assert result == 0
+
+
+def test_cmd_freshness_with_fresh_data() -> None:
+    """Test freshness command reports fresh data correctly."""
+    with (
+        patch("carbon_elt.cli.get_connection") as mock_conn,
+        patch("carbon_elt.cli.get_settings") as mock_settings,
+        patch("carbon_elt.cli.get_all_stats") as mock_stats,
+        patch("carbon_elt.cli.is_data_fresh") as mock_fresh,
+    ):
+        from carbon_elt.stats import TableStats
+
+        mock_settings.return_value.duckdb_path = ":memory:"
+        mock_connection = MagicMock()
+        mock_conn.return_value = mock_connection
+
+        recent_time = datetime(2026, 1, 20, 14, 0)
+        mock_stats.return_value = {
+            "raw_national_intensity": TableStats(
+                table_name="raw_national_intensity",
+                row_count=100,
+                min_date=recent_time,
+                max_date=recent_time,
+            ),
+            "raw_generation": TableStats(
+                table_name="raw_generation",
+                row_count=50,
+                min_date=recent_time,
+                max_date=recent_time,
+            ),
+            "raw_regional_intensity": TableStats(
+                table_name="raw_regional_intensity",
+                row_count=75,
+                min_date=recent_time,
+                max_date=recent_time,
+            ),
+        }
+        mock_fresh.return_value = True
+
+        result = cmd_freshness(MagicMock())
+        assert result == 0
+        mock_connection.close.assert_called_once()
+
+
+def test_cmd_freshness_with_stale_data() -> None:
+    """Test freshness command reports stale data."""
+    with (
+        patch("carbon_elt.cli.get_connection") as mock_conn,
+        patch("carbon_elt.cli.get_settings") as mock_settings,
+        patch("carbon_elt.cli.get_all_stats") as mock_stats,
+        patch("carbon_elt.cli.is_data_fresh") as mock_fresh,
+    ):
+        from carbon_elt.stats import TableStats
+
+        mock_settings.return_value.duckdb_path = ":memory:"
+        mock_connection = MagicMock()
+        mock_conn.return_value = mock_connection
+
+        old_time = datetime(2026, 1, 20, 12, 0)
+        mock_stats.return_value = {
+            "raw_national_intensity": TableStats(
+                table_name="raw_national_intensity",
+                row_count=100,
+                min_date=old_time,
+                max_date=old_time,
+            ),
+            "raw_generation": TableStats(
+                table_name="raw_generation", row_count=50, min_date=old_time, max_date=old_time
+            ),
+            "raw_regional_intensity": TableStats(
+                table_name="raw_regional_intensity",
+                row_count=75,
+                min_date=old_time,
+                max_date=old_time,
+            ),
+        }
+        mock_fresh.return_value = False
+
+        result = cmd_freshness(MagicMock())
+        assert result == 1
+        mock_connection.close.assert_called_once()
+
+
+def test_main_with_freshness_command() -> None:
+    """Test main function with freshness command."""
+    with patch("carbon_elt.cli.cmd_freshness") as mock_cmd:
+        mock_cmd.return_value = 0
+        result = main(["freshness"])
         assert result == 0

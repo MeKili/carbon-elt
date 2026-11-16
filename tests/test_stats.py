@@ -1,6 +1,6 @@
 """Tests for warehouse statistics and data quality metrics."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from carbon_elt.models import IntensityReading
 from carbon_elt.stats import (
@@ -8,6 +8,7 @@ from carbon_elt.stats import (
     get_intensity_index_distribution,
     get_latest_reading_time,
     get_table_stats,
+    is_data_fresh,
 )
 from carbon_elt.warehouse import get_connection, init_schema, load_readings
 
@@ -160,4 +161,96 @@ def test_get_latest_reading_time_empty_table() -> None:
     latest = get_latest_reading_time(conn, "raw_national_intensity")
 
     assert latest is None
+    conn.close()
+
+
+def test_table_stats_age_hours_with_recent_data() -> None:
+    """Calculate age in hours for recently loaded data."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    recent_time = datetime.now() - timedelta(minutes=30)
+    readings = [
+        IntensityReading(
+            valid_from=recent_time,
+            valid_to=recent_time + timedelta(minutes=30),
+            forecast=200,
+            actual=187,
+            index="moderate",
+        )
+    ]
+    load_readings(conn, readings)
+
+    stats = get_table_stats(conn, "raw_national_intensity")
+
+    assert stats.age_hours is not None
+    assert 0 <= stats.age_hours <= 1
+    conn.close()
+
+
+def test_table_stats_age_hours_empty_table() -> None:
+    """Age hours returns None for an empty table."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    stats = get_table_stats(conn, "raw_national_intensity")
+
+    assert stats.age_hours is None
+    conn.close()
+
+
+def test_is_data_fresh_with_recent_data() -> None:
+    """Data is fresh if latest reading is within threshold."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    recent_time = datetime.now() - timedelta(minutes=30)
+    readings = [
+        IntensityReading(
+            valid_from=recent_time,
+            valid_to=recent_time + timedelta(minutes=30),
+            forecast=200,
+            actual=187,
+            index="moderate",
+        )
+    ]
+    load_readings(conn, readings)
+
+    fresh = is_data_fresh(conn, "raw_national_intensity", hours_threshold=2)
+
+    assert fresh is True
+    conn.close()
+
+
+def test_is_data_fresh_with_stale_data() -> None:
+    """Data is stale if latest reading exceeds threshold."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    old_time = datetime.now() - timedelta(hours=3)
+    readings = [
+        IntensityReading(
+            valid_from=old_time,
+            valid_to=old_time + timedelta(minutes=30),
+            forecast=200,
+            actual=187,
+            index="moderate",
+        )
+    ]
+    load_readings(conn, readings)
+
+    fresh = is_data_fresh(conn, "raw_national_intensity", hours_threshold=2)
+
+    assert fresh is False
+    conn.close()
+
+
+def test_is_data_fresh_empty_table() -> None:
+    """Empty table is not fresh."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    fresh = is_data_fresh(conn, "raw_national_intensity", hours_threshold=2)
+
+    assert fresh is False
     conn.close()
