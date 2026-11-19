@@ -1,0 +1,42 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw tables from UK Carbon Intensity API extracts
+    tables:
+      - name: raw_national_intensity
+        description: National carbon-intensity readings at half-hourly intervals
+        columns:
+          - name: valid_from
+            description: Start of the half-hour window (UTC)
+          - name: valid_to
+            description: End of the half-hour window (UTC)
+          - name: forecast
+            description: Forecast carbon intensity (gCO₂/kWh)
+          - name: actual
+            description: Actual carbon intensity (gCO₂/kWh)
+          - name: index
+            description: Index category (low, moderate, high, very_high, unknown)
+
+models:
+  - name: stg_national_intensity
+    description: Deduplicated staging view of national carbon-intensity readings
+    columns:
+      - name: valid_from
+        description: Start of the half-hour window (UTC)
+        tests:
+          - not_null
+      - name: valid_to
+        description: End of the half-hour window (UTC)
+        tests:
+          - not_null
+      - name: forecast
+        description: Forecast carbon intensity (gCO₂/kWh)
+      - name: actual
+        description: Actual carbon intensity (gCO₂/kWh)
+      - name: index
+        description: Index category
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['low', 'moderate', 'high', 'very_high', 'unknown']

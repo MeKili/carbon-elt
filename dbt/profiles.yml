@@ -1,0 +1,9 @@
+carbon_elt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'carbon_elt.duckdb'
+      schema: main
+      threads: 4
+      timeout_seconds: 300

@@ -1,0 +1,19 @@
+name: carbon_elt
+version: 0.1.0
+config-version: 2
+profile: carbon_elt
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["data"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  carbon_elt:
+    staging:
+      +materialized: view
