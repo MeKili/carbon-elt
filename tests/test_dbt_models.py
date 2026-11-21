@@ -112,3 +112,63 @@ def test_stg_national_intensity_preserves_data() -> None:
     assert result[4] == "high", "Index should be preserved"
 
     conn.close()
+
+
+def test_mart_daily_intensity_aggregation() -> None:
+    """Test that mart_daily_intensity correctly aggregates readings by day."""
+    conn = get_connection(":memory:")
+    init_schema(conn)
+
+    base_date = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
+    readings = [
+        IntensityReading(
+            valid_from=base_date,
+            valid_to=base_date + timedelta(minutes=30),
+            forecast=100,
+            actual=105,
+            index="low",
+        ),
+        IntensityReading(
+            valid_from=base_date + timedelta(minutes=30),
+            valid_to=base_date + timedelta(hours=1),
+            forecast=110,
+            actual=115,
+            index="moderate",
+        ),
+        IntensityReading(
+            valid_from=base_date + timedelta(days=1),
+            valid_to=base_date + timedelta(days=1, minutes=30),
+            forecast=120,
+            actual=125,
+            index="high",
+        ),
+    ]
+    load_readings(conn, readings)
+
+    mart_query = """
+    select
+        date(valid_from) as intensity_date,
+        round(avg(cast(actual as float)), 1) as avg_actual_intensity,
+        round(avg(cast(forecast as float)), 1) as avg_forecast_intensity,
+        count(*) as reading_count
+    from raw_national_intensity
+    where actual is not null
+    group by date(valid_from)
+    order by intensity_date
+    """
+    result = conn.execute(mart_query).fetchall()
+    assert len(result) == 2, "Should have 2 days of data"
+
+    day1 = result[0]
+    assert day1[0] == base_date.date(), "First day should match"
+    assert day1[1] == 110.0, "Average actual for day 1 should be (105+115)/2=110"
+    assert day1[2] == 105.0, "Average forecast for day 1 should be (100+110)/2=105"
+    assert day1[3] == 2, "Day 1 should have 2 readings"
+
+    day2 = result[1]
+    assert day2[0] == (base_date + timedelta(days=1)).date(), "Second day should match"
+    assert day2[1] == 125.0, "Average actual for day 2 should be 125"
+    assert day2[2] == 120.0, "Average forecast for day 2 should be 120"
+    assert day2[3] == 1, "Day 2 should have 1 reading"
+
+    conn.close()
