@@ -9,6 +9,19 @@ from pydantic import BaseModel, Field
 
 IndexLevel = Literal["low", "moderate", "high", "very_high", "unknown"]
 
+UK_REGIONS = {
+    "SE": "South East",
+    "SW": "South West",
+    "E": "East",
+    "EM": "East Midlands",
+    "WM": "West Midlands",
+    "YH": "Yorkshire and Humberside",
+    "N": "North",
+    "NW": "North West",
+    "NE": "North East",
+    "EA": "Eastern",
+}
+
 
 class IntensityReading(BaseModel):
     """A national carbon-intensity reading for a single half-hour window."""

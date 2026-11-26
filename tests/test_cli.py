@@ -13,6 +13,7 @@ from carbon_elt.cli import (
     cmd_load,
     cmd_load_generation,
     cmd_load_regional,
+    cmd_regions,
     cmd_seed,
     cmd_status,
     cmd_test,
@@ -315,4 +316,18 @@ def test_main_with_freshness_command() -> None:
     with patch("carbon_elt.cli.cmd_freshness") as mock_cmd:
         mock_cmd.return_value = 0
         result = main(["freshness"])
+        assert result == 0
+
+
+def test_cmd_regions_lists_uk_regions() -> None:
+    """Test that regions command lists all available UK regions."""
+    result = cmd_regions(MagicMock())
+    assert result == 0
+
+
+def test_main_with_regions_command() -> None:
+    """Test main function with regions command."""
+    with patch("carbon_elt.cli.cmd_regions") as mock_cmd:
+        mock_cmd.return_value = 0
+        result = main(["regions"])
         assert result == 0

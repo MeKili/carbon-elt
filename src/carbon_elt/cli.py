@@ -9,6 +9,7 @@ from collections.abc import Callable
 
 from carbon_elt.config import get_settings
 from carbon_elt.extract import fetch_generation, fetch_regional_intensity
+from carbon_elt.models import UK_REGIONS
 from carbon_elt.pipeline import run
 from carbon_elt.stats import get_all_stats, get_intensity_index_distribution, is_data_fresh
 from carbon_elt.warehouse import (
@@ -159,6 +160,14 @@ def cmd_seed(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_regions(args: argparse.Namespace) -> int:
+    """Show all available UK regions and their codes."""
+    print("Available UK regions:")
+    for code, name in sorted(UK_REGIONS.items()):
+        print(f"  {code:3} — {name}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run the requested command."""
     parser = argparse.ArgumentParser(
@@ -173,6 +182,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("info", help="show configuration and warehouse path")
     subparsers.add_parser("status", help="show warehouse table statistics")
     subparsers.add_parser("freshness", help="check how fresh the warehouse data is")
+    subparsers.add_parser("regions", help="show available UK regions and their codes")
     subparsers.add_parser("seed", help="load reference data from dbt seeds")
     subparsers.add_parser("transform", help="run dbt models to transform raw data")
     subparsers.add_parser("test", help="run dbt tests to validate data constraints")
@@ -186,6 +196,7 @@ def main(argv: list[str] | None = None) -> int:
         "info": cmd_info,
         "status": cmd_status,
         "freshness": cmd_freshness,
+        "regions": cmd_regions,
         "seed": cmd_seed,
         "transform": cmd_transform,
         "test": cmd_test,

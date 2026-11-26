@@ -37,6 +37,9 @@ uv run carbon-elt info
 
 # Show table statistics (row counts and date ranges)
 uv run carbon-elt status
+
+# Show available UK regions and their codes
+uv run carbon-elt regions
 ```
 
 ### dbt
